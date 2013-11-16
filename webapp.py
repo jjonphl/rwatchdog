@@ -2,12 +2,16 @@ import web
 import os
 import os.path
 import json
+import ConfigParser 
 
 import uuid
 import dbutil
 import rutil
 
-publish_dir = 'publish'
+config = ConfigParser.ConfigParser()
+config.read('webapp.conf')
+
+publish_path = config.get('webapp', 'publish_path')
 db = dbutil.DatabaseUtil()
 r  = rutil.RUtil()
 
@@ -35,13 +39,15 @@ class Publish(object):
         _file.write(file_param.value)
 
     def _save(self, form):
+        error, error_msg = None, None
+
         _uuid = str(uuid.uuid4())
-        while os.path.exists(os.path.join(publish_dir, _uuid)):
+        while os.path.exists(os.path.join(publish_path, _uuid)):
             _uuid = str(uuid.uuid4())   # prob this happens ~ 0
 
         # create directory
-        _path = os.path.join(publish_dir, _uuid, 'upload')
-        os.mkdir(_path)
+        _path = os.path.join(publish_path, _uuid, 'upload')
+        os.makedirs(_path)
 
         # save md_file
         self._save_file(_path, form['md_file'])
@@ -60,9 +66,21 @@ class Publish(object):
             self._save_file(_path, form['rdata_file'], 'data.rda')
 
         # save to database
-        db.save(_uuid, form['md_file'].filename)
+        try:
+            db.save(_uuid, form['md_file'].filename)
+        except:
+            error = True
+            error_msg = str(sys.exc_info()[0])
 
-        return (False, None, _uuid)
+        if not error:
+            try:
+                rutil.knit_spawn(_uuid)
+                print 'spawned...'
+            except:
+                error = True
+                error_msg = str(sys.exc_info()[0])
+
+        return (error, error_msg, _uuid)
 
 
     def POST(self):
@@ -81,7 +99,11 @@ class Publish(object):
 
 class Status(object):
     def GET(self):
-        pass
+        form = web.input()
+        uuid = form['uuid']
+        (status, message) = db.get_status(uuid)
+        ret = {'uuid': uuid, 'status': status, 'message': message}
+        return json.dumps(ret)
 
 class View(object):
     def GET(self):
@@ -97,8 +119,8 @@ app = web.application(urls, globals())
 
 def setup_env():
     # setup publish directory
-    if not os.path.exists(publish_dir):
-        os.mkdir(publish_dir)
+    if not os.path.exists(publish_path):
+        os.mkdir(publish_path)
 
     db.setup()
     r.setup()

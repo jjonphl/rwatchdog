@@ -16,7 +16,7 @@ class RUtil(object):
 
         conf = ConfigParser.ConfigParser()
         conf.read(config)
-        self._publish_path = config.get('webapp', 'publish_path')
+        self._publish_path = conf.get('webapp', 'publish_path')
 
     def setup(self):
         # check that R is available
@@ -66,31 +66,33 @@ class RUtil(object):
             md_file = os.path.split(md_file)[1]
 
         cmd.append('-e')
-        cmd.append('knit2html("../upload/%s", options=c("use_xhtml", "smartypants", "mathjax", "highlight_code"))')
+        cmd.append('knit2html("../upload/%s", options=c("use_xhtml", "smartypants", "mathjax", "highlight_code"))' % (md_file,))
 
         if db:
             db.update_status(uuid, 'starting', None)
 
         try:
+            print '\n'.join(cmd)
             proc = sp.Popen(cmd, cwd=opath, stdout=sp.PIPE)
             buf = StringIO.StringIO()
 
             while proc.poll() is None:
                 buf.write(proc.read())
+                print 'BUF: %s' % (buf.getvalue(),)
                 if db:
                     db.update_status(uuid, 'running', buf.getvalue())
                 time.sleep(1)
-         except OSError, e:
+        except OSError, e:
             if db:
                 db.update_status(uuid, 'error', e.strerror)
             else:
                 print e.strerror
-         except:
-             error = sys.exc_info()[0]
-             if db:
-                 db.update_status(uuid, 'error', error)
-             else:
-                 print error
+        except:
+            error = str(sys.exc_info()[0])
+            if db:
+                db.update_status(uuid, 'error', error)
+            else:
+                print error
               
 
 

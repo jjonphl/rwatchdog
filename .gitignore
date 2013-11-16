@@ -1,3 +1,4 @@
 webapp.conf
 *.swp
 *.pyc
+publish/

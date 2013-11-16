@@ -1,3 +1,9 @@
+[postgresql]
+host = localhost
+username = webappuser
+password = xxxx
+dbname = rwatchdog
+
 [twitter]
 consumer_key = XXXX
 consumer_secret = XXXX

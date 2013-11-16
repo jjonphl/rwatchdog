@@ -1,2 +1,3 @@
-twitter.conf
+webapp.conf
 *.swp
+*.pyc

@@ -34,7 +34,8 @@ def get_url(uuid, with_base=False):
 
 class Index(object):
     def GET(self):
-        return '<html><body><h1>Hello World</h1></body></html>'
+        pubs = db.get_publications()
+        return render.index(pubs)
 
 class Publish(object):
     def GET(self):
@@ -172,6 +173,7 @@ urls = ('/', 'Index',
         '/view', 'View')         # view published .Rmd
 
 app = web.application(urls, globals())
+render = web.template.render('templates')
 
 
 def setup_env():

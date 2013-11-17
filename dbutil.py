@@ -74,4 +74,14 @@ UPDATE publications
  WHERE uuid = ?''', (status, message, message, uuid))
         self._db.commit()
 
+    def get_publications(self):
+        cu = self._db.cursor()
+        cu.execute('''
+SELECT uuid, md_file, status, message, tw_handle, tw_image_title
+  FROM publications''')
+
+        ret = cu.fetchall()
+        self._db.commit()
+        return ret
+
 DatabaseUtil = _SQLiteDatabaseUtil

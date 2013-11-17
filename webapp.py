@@ -3,6 +3,7 @@ import os
 import os.path
 import json
 import ConfigParser 
+import sys
 
 import uuid
 import dbutil
@@ -70,7 +71,7 @@ class Publish(object):
             db.save(_uuid, form['md_file'].filename)
         except:
             error = True
-            error_msg = str(sys.exc_info()[0])
+            error_msg = str(sys.exc_info()[1])
 
         if not error:
             try:
@@ -78,7 +79,7 @@ class Publish(object):
                 print 'spawned...'
             except:
                 error = True
-                error_msg = str(sys.exc_info()[0])
+                error_msg = str(sys.exc_info()[1])
 
         return (error, error_msg, _uuid)
 
@@ -107,7 +108,15 @@ class Status(object):
 
 class View(object):
     def GET(self):
-        pass
+        form = web.input()
+        uuid = form['uuid']
+
+        if not uuid:
+            raise StandardError('Please specify uuid.')
+
+        md = db.get_md_file(uuid)
+        md = os.path.splitext(md)[0]
+        raise web.seeother('/%s/%s/upload/%s.html' % (publish_path, uuid, md))
 
 urls = ('/', 'Index',
         '/publish', 'Publish',   # publish new .Rmd file

@@ -9,7 +9,7 @@ class _SQLiteDatabaseUtil(object):
         conf = ConfigParser.ConfigParser()
         conf.read(config)
         filename = conf.get('sqlite3', 'filename')
-        self._db = sqlite3.connect(filename)
+        self._db = sqlite3.connect(filename, check_same_thread=False)
 
     def setup(self):
         cu = self._db.cursor()
@@ -56,8 +56,8 @@ SELECT status, message
         cu.execute('''
 UPDATE publications
    SET status = ?,
-       message = ?
- WHERE uuid = ?''', (status, message, uuid))
+       message = CASE WHEN ? IS NULL THEN message ELSE ? END
+ WHERE uuid = ?''', (status, message, message, uuid))
         self._db.commit()
 
 DatabaseUtil = _SQLiteDatabaseUtil

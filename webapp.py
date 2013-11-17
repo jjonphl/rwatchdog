@@ -4,17 +4,33 @@ import os.path
 import json
 import ConfigParser 
 import sys
+import glob
 
 import uuid
 import dbutil
 import rutil
+import twitterutil
 
 config = ConfigParser.ConfigParser()
 config.read('webapp.conf')
 
 publish_path = config.get('webapp', 'publish_path')
+base_url = config.get('webapp', 'base_url')
+tw_tags = config.get('webapp', 'twitter_tags')
+
 db = dbutil.DatabaseUtil()
 r  = rutil.RUtil()
+tw = twitterutil.TwitterUtil()
+
+
+def get_url(uuid, with_base=False):
+    md = db.get_md_file(uuid)
+    md = os.path.splitext(md)[0]
+    if with_base:
+        ret = '%s/%s/%s/upload/%s.html' % (base_url, publish_path, uuid, md)
+    else:
+        ret = '/%s/%s/upload/%s.html' % (publish_path, uuid, md)
+    return ret
 
 class Index(object):
     def GET(self):
@@ -68,11 +84,15 @@ class Publish(object):
 
         # save to database
         try:
-            db.save(_uuid, form['md_file'].filename)
+            tw_handle = form['tw_handle'] if 'tw_handle' in form else ''
+            tw_image_title = form['tw_image_title'] if 'tw_image_title' in form else ''
+            db.save(_uuid, form['md_file'].filename, 'created', '', 
+                    tw_handle = tw_handle, tw_image_title=tw_image_title) 
         except:
             error = True
             error_msg = str(sys.exc_info()[1])
 
+        # compile to HTML
         if not error:
             try:
                 rutil.knit_spawn(_uuid)
@@ -80,6 +100,36 @@ class Publish(object):
             except:
                 error = True
                 error_msg = str(sys.exc_info()[1])
+
+        # publish to twitter
+        if not error:
+            if tw_image_title != '':
+                try:
+                    img = glob.iglob(os.path.join(_path, 'figure', '%s.*' % (tw_image_title,))).next()
+                except StopIteration:
+                    img = ''
+            else:
+                img = ''
+
+            if img == '':
+                try:
+                    print os.path.join(_path, 'figure', '*.png')
+                    img = glob.iglob(os.path.join(_path, 'figure', '*.png')).next()
+                except StopIteration:
+                    img = ''
+
+            tw_handle = 'Anonymous' if tw_handle == '' else tw_handle
+            tw_msg = '%s has published an analysis at %s %s' %\
+                    (tw_handle, get_url(_uuid, True), tw_tags)
+
+            print 'Image: [%s]' % (img,)
+            print 'Message: [%d][%s]' % (len(tw_msg),tw_msg)
+
+            if img == '':
+                tw.tweet(tw_msg)
+            else:
+                img = os.path.split(img)[1]
+                tw.tweet_img(tw_msg, os.path.join(_path, 'figure', img))
 
         return (error, error_msg, _uuid)
 
@@ -114,9 +164,7 @@ class View(object):
         if not uuid:
             raise StandardError('Please specify uuid.')
 
-        md = db.get_md_file(uuid)
-        md = os.path.splitext(md)[0]
-        raise web.seeother('/%s/%s/upload/%s.html' % (publish_path, uuid, md))
+        raise web.seeother(get_url(uuid))
 
 urls = ('/', 'Index',
         '/publish', 'Publish',   # publish new .Rmd file

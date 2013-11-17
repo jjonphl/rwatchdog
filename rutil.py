@@ -74,19 +74,19 @@ class RUtil(object):
             db.update_status(uuid, 'starting', None)
 
         try:
-            proc = sp.Popen(cmd, cwd=ipath, stderr=sp.PIPE, shell=True)
+            proc = sp.Popen(cmd, cwd=ipath, stdout=sp.PIPE, shell=True)
             buf = StringIO.StringIO()
             ret = proc.poll()
 
             while ret is None:
-                buf.write(proc.stderr.read())
+                buf.write(proc.stdout.read())
                 print 'BUF: %s' % (buf.getvalue(),)
                 if db:
                     db.update_status(uuid, 'running', buf.getvalue())
                 time.sleep(1)
                 ret = proc.poll()
 
-            buf.write(proc.stderr.read())
+            buf.write(proc.stdout.read())
             if db:
                 db.update_status(uuid, 'running', buf.getvalue())
 

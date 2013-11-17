@@ -1,3 +1,12 @@
+[webapp]
+publish_path = static/publications
+base_url = http://dev0.alephzero.ph
+db_type = sqlite3
+twitter_tags = #KabantayNgBayan
+
+[sqlite3]
+filename = rwatchdog.db
+
 [postgresql]
 host = localhost
 username = webappuser

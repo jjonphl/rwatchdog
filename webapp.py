@@ -75,9 +75,10 @@ class Publish(object):
             # special handling for "param array"
             file_param = web.webapi.rawinput().get('data_file')
             if not isinstance(file_param, list):
-                file_param = list(file_param)
-            for f in file_param:
-                self._save_file(_path, f)
+                self._save_file(_path, file_param)
+            else:
+                for f in file_param:
+                    self._save_file(_path, f)
 
         # save rdata_file if it exists
         if form['rdata_file'] != {}:

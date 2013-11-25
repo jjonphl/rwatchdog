@@ -1,0 +1,76 @@
+% DBM data documentation
+
+Glossary
+========
+1. BESF - Budget of Expenditures and Sources of Financing
+2. GAA - General Appropriations Act
+3. SAOB - statement of allotments, obligations & balances
+4. OSEC - office of the secretary
+
+
+GAA-AA: Automatic appropriation
+===============================
+
+1. DPT_CD - department code
+2. DPT_DSC - department description
+3. AGY_TYPE - agency type
+4. OWNER_CD - owner code ??
+5. OWNER_DSC - owner description
+6. FPAP_CD - 
+7. FPAP_DSC
+8. AREA_CD
+9. AREA_DSC 
+10. PS - personnel/personal services
+11. MOOE - maintenance & other operating expenses
+12. CO - capital outlay
+13. NET - 
+
+
+GAA-NA: New appropriations
+==============================
+
+
+SAOB: Statement of allotments, obligations and balances
+=======================================================
+1. period
+2. agency
+3. record
+4. record_label
+5. approp
+6. allot_ps
+7. allot_mode
+8. allot_co
+9. allot_tot
+10. oblig_ps
+11. oblig_mode
+12. oblig_co
+13. oblig_tot
+14. uoblig_ps
+15. uoblig_mode
+16. uoblig_co
+17. uoblig_tot
+18. obligrate
+
+Sample Analysis
+===============
+
+```{r,echo=FALSE}
+library(ggplot2)
+library(plyr)
+```
+
+```{r}
+gaa.2013 <- read.csv("2013-GAA.csv")[-1,]
+
+gaa.sum <- ddply(gaa.2013, c("DPT_CD"), 
+                 function(x) c(PS=sum(x$PS,na.rm=TRUE),
+                               MOOE=sum(x$MOOE,na.rm=TRUE),
+                               CO=sum(x$CO,na.rm=TRUE)))
+
+summary(gaa.sum[,2:4])
+```
+
+```{r}
+qplot(gaa.sum$DPT_CD, gaa.sum$PS)
+```
+

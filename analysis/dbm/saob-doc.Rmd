@@ -1,0 +1,50 @@
+% SAOB analysis
+# SAOB analysis
+
+## Explore the data
+```{r,echo=FALSE}
+library(plyr)
+library(ggplot2)
+```
+
+What fields do we have?
+
+```{r}
+saob <- read.csv("2013-SAOB.csv")
+names(saob)
+sapply(saob, class)
+```
+
+Show first 5 lines
+
+```{r}
+head(saob)
+```
+
+Cleanup numeric fields stored as factor
+
+```{r}
+saob <- transform(saob, allot_ps=as.numeric(allot_ps),
+                  allot_mode=as.numeric(allot_mode),
+                  allot_co=as.numeric(allot_co),
+                  allot_tot=as.numeric(allot_tot))
+```
+
+
+```{r}
+summary(saob)
+```
+
+```{r}
+budget <- subset(saob,subset=record=="budget")
+plot(budget[,c("allot_ps", "allot_mode", "allot_co")])
+plot(budget[,c("oblig_ps", "oblig_mode", "oblig_co")])
+
+qplot(budget[,"allot_tot"], geom="bar")
+summary(as.numeric(budget[,"allot_tot"]))
+
+qplot(factor(1), data=budget.sum, fill=agency) + geom_bar(width=1) + coord_polar(theta="y")
+```
+
+
+

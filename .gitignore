@@ -3,3 +3,4 @@ webapp.conf
 *.pyc
 *.db
 publish/
+static/publications/

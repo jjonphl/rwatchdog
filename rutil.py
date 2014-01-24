@@ -13,27 +13,35 @@ _unix = False
 
 class RUtil(object):
 
-    def __init__(self, arch='x64', config='webapp.conf'):
-        self._arch = arch
-
+    def __init__(self, config='webapp.conf'):
         conf = ConfigParser.ConfigParser()
         conf.read(config)
         self._publish_path = conf.get('webapp', 'publish_path')
+        arch = conf.get('R', 'arch')
 
+        if arch in ('x86','x64'):
+            self._base_call = ['Rscript', '--arch', arch]
+        else:  # not provided or unknown value
+            self._base_call = ['Rscript']
+
+    def _call(self, *args):
+        _call = self._base_call + list(args)
+        return sp.call(_call)
+        
     def setup(self):
         # check that R is available
         try:
-            sp.call(['Rscript', '--arch', self._arch, '--version'])
+            self._call('--version')
         except OSError, e:
             raise StandardError('Rscript not found: %s' % (e.strerror,))
 
         # check that knitr is available
-        ret = sp.call(['Rscript', '--arch', self._arch, '-e', 'library(knitr)'])
+        ret = self._call('-e', 'library(knitr)')
         if ret != 0:
             raise StandardError('R library knitr not found.')
 
     def knitr(self, uuid, db):
-        cmd = ['Rscript', '--arch', self._arch, '-e']
+        cmd = ['-e']
         if _unix:
             cmd.append('source("__compile__.R")')
         else:
@@ -74,6 +82,7 @@ class RUtil(object):
             db.update_status(uuid, 'starting', None)
 
         try:
+            cmd = self._base_call + cmd
             proc = sp.Popen(cmd, cwd=ipath, stdout=sp.PIPE, shell=True)
             buf = StringIO.StringIO()
             ret = proc.poll()
@@ -123,6 +132,3 @@ if __name__ == '__main__':
     db = dbutil.DatabaseUtil()
     r = RUtil()
     r.knitr(uuid, db)
-
-
-

@@ -173,8 +173,6 @@ urls = ('/', 'Index',
         '/status', 'Status',     # query publishing status
         '/view', 'View')         # view published .Rmd
 
-app = web.application(urls, globals())
-render = web.template.render('templates')
 
 
 def setup_env():
@@ -185,10 +183,11 @@ def setup_env():
     db.setup()
     r.setup()
 
-
-
 setup_env()
 
+app = web.application(urls, globals())
+render = web.template.render('templates')
+wsgi_app = web.application(urls, globals()).wsgifunc()
+
 if __name__ == '__main__':
-    setup_env()
     app.run()

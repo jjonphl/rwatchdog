@@ -18,3 +18,6 @@ consumer_key = XXXX
 consumer_secret = XXXX
 access_token_key = XXXX
 access_token_secret = XXXX
+
+[R]
+arch = x86|x64|none

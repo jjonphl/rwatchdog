@@ -4,3 +4,6 @@ webapp.conf
 *.db
 publish/
 static/publications/
+.Rhistory
+.RData
+pydev
